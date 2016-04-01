@@ -94,7 +94,6 @@ main(int argc, char** argv)
   }
   for (auto &fd : downloadFiles) {
     fd.m_local_filename = nodename + '-' + fd.m_local_filename;
-    // TODO create consumers
     Consumer c(fd.m_filename, fd);
     c.start();
   }
