@@ -63,7 +63,8 @@ protected:
   const ndn::Name m_prefix;
   ndn::Face m_face;
   FileData m_filedata;
-  std::map<uint64_t, const char*> m_bufferedData;
+  //std::map<uint64_t, const char*> m_bufferedData;
+  std::map<uint64_t, std::shared_ptr<ndn::Data>> m_bufferedData;
   bool m_debug;
   bool m_haveFinalBlockId;
   uint64_t m_nextSegmentNum; 

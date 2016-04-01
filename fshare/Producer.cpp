@@ -50,6 +50,7 @@ Producer::populateStore()
     auto data = std::make_shared<ndn::Data>(ndn::Name(m_prefix).appendSegment(0));
     m_store.push_back(data);
   }
+
   auto finalBlockId = ndn::name::Component::fromSegment(m_store.size() - 1);
   for (const auto& data : m_store) {
     data->setFinalBlockId(finalBlockId);
@@ -60,24 +61,27 @@ Producer::populateStore()
     std::cerr << "Store has size " << m_store.size() << std::endl;
 
   if (m_debug) {
-    // TODO investigate why this debug file doesn't match the original file!
     std::cerr << "Writing debug file " << m_filedata.m_local_filename << ".debug" << std::endl;
-    std::map<uint64_t, const char*> bufferedData;
+    std::map<uint64_t, std::shared_ptr<ndn::Data>> bufferedData;
     for (const auto& data : m_store) {
+      const auto segmentNum = static_cast<size_t>(data->getName()[-1].toSegment());
       const ndn::Block& block = data->getContent();
-      bufferedData[data->getName()[-1].toSegment()] = reinterpret_cast<const char*>(block.value());
+      auto mydata = std::make_shared<ndn::Data>(ndn::Name(m_prefix).appendSegment(segmentNum));
+      mydata->setContent(block.value(), block.value_size());
+      bufferedData[segmentNum] = mydata;
     }
-    std::ofstream of(m_filedata.m_local_filename+".debug", std::ofstream::binary);
+    std::cerr << "bufferedData.size() = " << bufferedData.size() << std::endl;
+    std::string debugFile(m_filedata.m_local_filename+".debug");
+    std::ofstream of(debugFile, std::ofstream::binary);
     if (!of) {
       std::cout << "ERROR: could not open " << m_filedata.m_local_filename << " for write" << std::endl;
       exit(1);
     }
     for (const auto &it : bufferedData) {
-      of << it.second;
+      of.write(reinterpret_cast<const char*>(it.second->getContent().value()), it.second->getContent().value_size());
     }
     of.close();
   }
-    
 }
 
 void

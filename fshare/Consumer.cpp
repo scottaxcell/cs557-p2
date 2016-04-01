@@ -11,14 +11,18 @@ Consumer::onFirstData(const ndn::Interest& interest, const ndn::Data& data)
   }
 
   // save the first segment data we received
+  const auto segmentNum = static_cast<size_t>(data.getName()[-1].toSegment());
   const ndn::Block& block = data.getContent();
-  m_bufferedData[data.getName()[-1].toSegment()] = reinterpret_cast<const char*>(block.value());
+  auto mydata = std::make_shared<ndn::Data>(ndn::Name(m_prefix).appendSegment(segmentNum));
+  mydata->setContent(block.value(), block.value_size());
+  m_bufferedData[segmentNum] = mydata;
+
   m_nextSegmentNum++;
 
   if (m_debug)
     std::cerr << "onFirstData m_lastSegmentNum = " << m_lastSegmentNum << std::endl;
 
-  if (m_haveFinalBlockId && (m_bufferedData.size() - 1) == m_lastSegmentNum) { // TODO verify the lastSegmentNum == m_bufferedData.size()
+  if (m_haveFinalBlockId && (m_bufferedData.size() - 1) == m_lastSegmentNum) {
     // received the last data segment so write the file and exit
     writeBufferedData();
     m_face.shutdown();
@@ -61,13 +65,18 @@ Consumer::onSegmentData(const ndn::Interest& interest, const ndn::Data& data)
     m_haveFinalBlockId = true;
   }
 
+  //const ndn::Block& block = data.getContent();
+  //m_bufferedData[data.getName()[-1].toSegment()] = reinterpret_cast<const char*>(block.value());
+  const auto segmentNum = static_cast<size_t>(data.getName()[-1].toSegment());
   const ndn::Block& block = data.getContent();
-  m_bufferedData[data.getName()[-1].toSegment()] = reinterpret_cast<const char*>(block.value());
+  auto mydata = std::make_shared<ndn::Data>(ndn::Name(m_prefix).appendSegment(segmentNum));
+  mydata->setContent(block.value(), block.value_size());
+  m_bufferedData[segmentNum] = mydata;
 
   if (m_debug)
     std::cerr << "m_bufferedData.size() = " << m_bufferedData.size() << std::endl;
 
-  if (m_haveFinalBlockId && (m_bufferedData.size() - 1) == m_lastSegmentNum) { // TODO verify the lastSegmentNum == m_bufferedData.size()
+  if (m_haveFinalBlockId && (m_bufferedData.size() - 1) == m_lastSegmentNum) {
     // received the last data segment so write the file and exit
     writeBufferedData();
     m_face.shutdown();
@@ -94,7 +103,7 @@ Consumer::writeBufferedData()
     exit(1);
   }
   for (const auto &it : m_bufferedData) {
-    of << it.second;
+    of.write(reinterpret_cast<const char*>(it.second->getContent().value()), it.second->getContent().value_size());
   }
   of.close();
 
