@@ -1,10 +1,13 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <thread>
 
 #include "fshare.h"
 #include "Producer.h"
 #include "Consumer.h"
+
+#define debug 1
 
 namespace {
 
@@ -22,7 +25,15 @@ std::string translateNameToLocalName(std::string &filename)
   return local_filename;
 }
 
+
+void runProducer(FileData fd)
+{
+  Producer p(fd.m_filename, fd);
+  p.start();
+}
+
 } // namespace
+
 
 int
 main(int argc, char** argv)
@@ -53,7 +64,7 @@ main(int argc, char** argv)
     else if (std::string(argv[i]) == "-p") {
       i++;
       while (i < argc) {
-        if (std::string(argv[i]) == "-d" || std::string(argv[i]) == "-n") {
+        if (std::string(argv[i]) == "-d" || std::string(argv[i]) == "-n" || std::string(argv[i]) == "-p") {
           i--;
           break;
         }
@@ -67,7 +78,8 @@ main(int argc, char** argv)
     else if (std::string(argv[i]) == "-d") {
       i++;
       while (i < argc) {
-        if (std::string(argv[i]) == "-p" || std::string(argv[i]) == "-n") {
+        if (std::string(argv[i]) == "-d" || std::string(argv[i]) == "-n" || std::string(argv[i]) == "-p") {
+          i--;
           break;
         }
         std::string filename(argv[i]);
@@ -84,19 +96,27 @@ main(int argc, char** argv)
   if (nodename == "NOT_SET" || (publishFiles.empty() && downloadFiles.empty()))
     usage();
 
-  // prepend node name to local_filename
-  for (auto &fd : publishFiles) {
-    fd.m_local_filename = nodename + '-' + fd.m_local_filename;
-
-    // TODO create producers - these will need to be forked or threaded since start() does not exit
-    Producer p(fd.m_filename, fd);
-    p.start();
-  }
+  // download files sequentially
   for (auto &fd : downloadFiles) {
     fd.m_local_filename = nodename + '-' + fd.m_local_filename;
+    if (debug)
+      std::cerr << "Consumer: " << fd.m_filename << " = " << fd.m_local_filename << std::endl;
     Consumer c(fd.m_filename, fd);
     c.start();
   }
+
+  // create each producer on it's own thread
+  std::vector<std::thread> threads;
+  for (auto &fd : publishFiles) {
+    // prepend node name to local_filename
+    fd.m_local_filename = nodename + '-' + fd.m_local_filename;
+    threads.push_back(std::thread(runProducer, fd));
+    if (debug)
+      std::cerr << "Producer: " << fd.m_filename << " = " << fd.m_local_filename << std::endl;
+  }
+  // run producers
+  for (auto &t : threads)
+    t.join();
 
   return 0;
 }

@@ -26,7 +26,6 @@ Consumer::onFirstData(const ndn::Interest& interest, const ndn::Data& data)
     // received the last data segment so write the file and exit
     writeBufferedData();
     m_face.shutdown();
-    exit(0);
   }
 
   size_t maxSegments = 1024; // TODO should this be m_lastSegmentNum instead?
@@ -80,7 +79,6 @@ Consumer::onSegmentData(const ndn::Interest& interest, const ndn::Data& data)
     // received the last data segment so write the file and exit
     writeBufferedData();
     m_face.shutdown();
-    exit(0);
   }
 }
 
