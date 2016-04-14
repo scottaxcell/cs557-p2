@@ -4,18 +4,19 @@ source tb_compat.tcl
 
 # create nodes
 set nodeA [$ns node]
-tb-set-node-os $nodeA Ubuntu1404-64-STDNDN
+tb-set-node-os $nodeA U1404-64-csu557aj
 
 set node1 [$ns node]
-tb-set-node-os $node1 Ubuntu1404-64-STDNDN
+tb-set-node-os $node1 U1404-64-csu557aj
 
 set node2 [$ns node]
-tb-set-node-os $node2 Ubuntu1404-64-STDNDN
+tb-set-node-os $node2 U1404-64-csu557aj
 
 set node3 [$ns node]
-tb-set-node-os $node3 Ubuntu1404-64-STDNDN
+tb-set-node-os $node3 U1404-64-csu557aj
 
 set router0 [$ns node]
+tb-set-node-os $router0 U1404-64-csu557aj
 
 # create lan
 set lan0 [$ns make-lan "$router0 $node1 $node2 $node3" 100Mb 500ms]
