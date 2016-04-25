@@ -1,0 +1,50 @@
+============
+HOW TO BUILD
+============
+$ ./waf configure
+$ ./waf
+
+
+==========
+HOW TO RUN
+==========
+$ ./build/bin/fshare -n <nodename> [-p <filename>] [-d <filename>] [-h]
+
+Note: The nodename needs to be specified so that the program knows which
+file is associated with the node that program is being run on. This could
+have possibily been calculated dynamically using the hostname, but I chose
+to focus my energy on the networking portion of this project instead.
+
+
+==================
+EXPERIMENT NS FILE
+==================
+The NS file I used in the experiment can be found in the same directory
+as this README file. It is named project2_ns.tcl.
+
+
+==================
+EXPERIMENT RESULTS
+==================
+Please see the download log times for /cs557/test1 and /csu557/test2 for each
+interested node in the experimentResults directory.
+
+I observed that the first node to attempt to download the published file
+took the longest amount of time. The subsequent downloads on the same node
+and on other nodes in the network was substantially faster. For example,
+node1 was first to download /cs557/test1 and it took 2.5 seconds. Subsequent
+initial downloads from the other nodes in the network took 1.5 seconds. Then
+all following downloads, after the initial download, took 20 ms.
+
+The behavior I saw and described above appears to make sense from what I've
+learned about NDN. The first interest from node1 in the published file needs 
+to propogate to the publishing node, nodeA. Then the initial interest in from
+node2 and node3 can then download the file from the cache in router0. Hence,
+we see the shorter download time. Then the nine subsequent downloads from
+node1, node2, and node3 all have the file already in the cache and so there
+is no need to send an interest to router0 or nodeA. We can see this by the
+extremely small download times.
+
+Note: For /cs557/test2, node3 was the first node to show interest in the file so
+it has the longest initial download time. Whereas for /cs557/test1, node1 was
+the first to show interest.
